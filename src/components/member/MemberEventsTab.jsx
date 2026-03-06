@@ -29,7 +29,7 @@ const MemberEventsTab = () => {
     setIsVoting(false);
   };
 
-  const hasVoted = poll?.votesBy?.[currentUser.email] !== undefined;
+  const hasVoted = poll?.votesBy?.[btoa(currentUser.email)] !== undefined;
   return (
     <div>
       <h1 className="text-3xl font-bold mb-6">Events & Suggestions</h1>
@@ -64,7 +64,7 @@ const MemberEventsTab = () => {
                     );
                     const pct = total ? Math.round((o.votes / total) * 100) : 0;
                     const isSelected =
-                      String(poll?.votesBy?.[currentUser.email]) ===
+                      String(poll?.votesBy?.[btoa(currentUser.email)]) ===
                       String(idx);
                     return (
                       <div

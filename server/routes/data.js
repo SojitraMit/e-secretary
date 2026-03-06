@@ -12,6 +12,11 @@ const {
   Maintenance,
 } = require("../models");
 
+// Helper functions for email encoding/decoding
+const encodeEmail = (email) => Buffer.from(email).toString("base64");
+const decodeEmail = (encoded) =>
+  Buffer.from(encoded, "base64").toString("utf-8");
+
 // Apply middleware to all routes in this router
 router.use(verifyToken);
 
@@ -139,8 +144,11 @@ router.put("/poll/vote", async (req, res) => {
       return res.status(400).json({ msg: "Poll is closed" });
     }
 
+    // Encode email to handle special characters safely for MongoDB Map keys
+    const encodedEmail = encodeEmail(userEmail);
+
     // Check if user already voted (read-only check)
-    if (poll.votesBy && poll.votesBy.has(userEmail)) {
+    if (poll.votesBy && poll.votesBy.has(encodedEmail)) {
       return res.status(400).json({ msg: "You already voted" });
     }
 
@@ -154,8 +162,8 @@ router.put("/poll/vote", async (req, res) => {
       poll.votesBy = new Map();
     }
 
-    // Add vote
-    poll.votesBy.set(userEmail, optionIndex);
+    // Add vote with encoded email
+    poll.votesBy.set(encodedEmail, optionIndex);
     poll.options[optionIndex].votes += 1;
 
     // Save and return updated poll

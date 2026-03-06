@@ -28,7 +28,7 @@ const MemberPanel = () => {
   const [selectedBill, setSelectedBill] = useState(null);
 
   // Poll
-  const hasVoted = poll?.votesBy && poll.votesBy.get(currentUser.email);
+  const hasVoted = poll?.votesBy && poll.votesBy.get(btoa(currentUser.email));
   const [pollSelection, setPollSelection] = useState(null);
 
   // Maintenance
@@ -213,8 +213,7 @@ const MemberPanel = () => {
                             ? Math.round((o.votes / total) * 100)
                             : 0;
                           const isSelected =
-                            poll.votesBy.get(currentUser.email) ===
-                            (o._id || o.id);
+                            poll.votesBy.get(btoa(currentUser.email)) == idx;
                           return (
                             <div
                               key={key}
