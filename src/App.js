@@ -1,21 +1,78 @@
 import React from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import { DataProvider, useData } from "./DataContext";
-import Auth from "./components/Auth";
-import AdminPanel from "./components/AdminPanel";
-import MemberPanel from "./components/MemberPanel";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import AdminDashboard from "./pages/AdminDashboard";
+import MemberDashboard from "./pages/MemberDashboard";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const AppContent = () => {
   const { currentUser } = useData();
 
-  if (!currentUser) {
-    return <Auth />;
-  }
-
-  if (currentUser.role === "admin") {
-    return <AdminPanel />;
-  }
-
-  return <MemberPanel />;
+  return (
+    <Router>
+      <Routes>
+        <Route
+          path="/login"
+          element={
+            currentUser ? (
+              <Navigate
+                to={
+                  currentUser.role === "admin"
+                    ? "/admin/dashboard"
+                    : "/member/home"
+                }
+                replace
+              />
+            ) : (
+              <Login />
+            )
+          }
+        />
+        <Route
+          path="/signup"
+          element={currentUser ? <Navigate to="/login" replace /> : <Signup />}
+        />
+        <Route
+          path="/admin/*"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/member/*"
+          element={
+            <ProtectedRoute requiredRole="member">
+              <MemberDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/"
+          element={
+            <Navigate
+              to={
+                currentUser
+                  ? currentUser.role === "admin"
+                    ? "/admin/dashboard"
+                    : "/member/home"
+                  : "/login"
+              }
+              replace
+            />
+          }
+        />
+      </Routes>
+    </Router>
+  );
 };
 
 function App() {

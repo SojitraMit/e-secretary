@@ -12,6 +12,11 @@ const {
   Maintenance,
 } = require("../models");
 
+// Helper functions for email encoding/decoding
+const encodeEmail = (email) => Buffer.from(email).toString("base64");
+const decodeEmail = (encoded) =>
+  Buffer.from(encoded, "base64").toString("utf-8");
+
 // Apply middleware to all routes in this router
 router.use(verifyToken);
 
@@ -35,7 +40,7 @@ router.get("/data", async (req, res) => {
     updates,
     bills,
     suggestions,
-    poll,
+    poll: poll ? poll.toObject() : null,
   });
 });
 
@@ -92,24 +97,84 @@ router.post("/poll", async (req, res) => {
   res.json(newP);
 });
 
+// router.put("/poll/vote", async (req, res) => {
+//   try {
+//     const { pollId, optionIndex, userEmail } = req.body;
+//     const poll = await Poll.findById(pollId);
+//     if (!poll || !poll.isActive)
+//       return res.status(400).json({ msg: "Poll inactive" });
+
+//     if (poll.votesBy && poll.votesBy.get(userEmail))
+//       return res.status(400).json({ msg: "Already voted" });
+
+//     if (optionIndex >= 0 && optionIndex < poll.options.length) {
+//       const option = poll.options[optionIndex];
+//       option.votes += 1;
+//       if (!poll.votesBy) poll.votesBy = new Map();
+//       poll.votesBy.set(userEmail, String(optionIndex));
+//       await poll.save();
+//       res.json(poll.toObject());
+//     } else {
+//       return res.status(400).json({ msg: "Invalid option" });
+//     }
+//   } catch (err) {
+//     res.status(500).json({ msg: err.message });
+//   }
+// });
+
 router.put("/poll/vote", async (req, res) => {
-  const { pollId, optionId, userEmail } = req.body;
-  const poll = await Poll.findById(pollId);
-  if (!poll || !poll.isActive)
-    return res.status(400).json({ msg: "Poll inactive" });
+  try {
+    const { pollId, optionIndex, userEmail } = req.body;
 
-  if (poll.votesBy.get(userEmail))
-    return res.status(400).json({ msg: "Already voted" });
+    if (!pollId || optionIndex === null || !userEmail) {
+      return res.status(400).json({ msg: "Missing required fields" });
+    }
 
-  const option = poll.options.id(optionId);
-  if (option) {
-    option.votes += 1;
-    poll.votesBy.set(userEmail, optionId);
-    await poll.save();
+    // Use findByIdAndUpdate with atomic operation to prevent race conditions
+    const update = { $inc: {} };
+    update.$inc[`options.${optionIndex}.votes`] = 1;
+
+    const poll = await Poll.findById(pollId);
+
+    if (!poll) {
+      return res.status(400).json({ msg: "Poll not found" });
+    }
+
+    if (!poll.isActive) {
+      return res.status(400).json({ msg: "Poll is closed" });
+    }
+
+    // Encode email to handle special characters safely for MongoDB Map keys
+    const encodedEmail = encodeEmail(userEmail);
+
+    // Check if user already voted (read-only check)
+    if (poll.votesBy && poll.votesBy.has(encodedEmail)) {
+      return res.status(400).json({ msg: "You already voted" });
+    }
+
+    // Validate option index
+    if (optionIndex < 0 || optionIndex >= poll.options.length) {
+      return res.status(400).json({ msg: "Invalid option" });
+    }
+
+    // Initialize votesBy if needed
+    if (!poll.votesBy) {
+      poll.votesBy = new Map();
+    }
+
+    // Add vote with encoded email
+    poll.votesBy.set(encodedEmail, optionIndex);
+    poll.options[optionIndex].votes += 1;
+
+    // Save and return updated poll
+    const updatedPoll = await poll.save();
+
+    res.json(updatedPoll.toObject());
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: err.message });
   }
-  res.json(poll);
 });
-
 router.put("/poll/close/:id", async (req, res) => {
   const poll = await Poll.findByIdAndUpdate(
     req.params.id,

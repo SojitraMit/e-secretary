@@ -4,6 +4,7 @@ const PollSchema = new mongoose.Schema({
   question: String,
   options: [
     {
+      _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
       text: String,
       votes: { type: Number, default: 0 },
     },
