@@ -28,7 +28,7 @@ const MemberPanel = () => {
   const [selectedBill, setSelectedBill] = useState(null);
 
   // Poll
-  const hasVoted = poll?.votesBy && poll.votesBy[currentUser.email];
+  const hasVoted = poll?.votesBy && poll.votesBy.get(currentUser.email);
   const [pollSelection, setPollSelection] = useState(null);
 
   // Maintenance
@@ -207,13 +207,14 @@ const MemberPanel = () => {
                           const key = o._id || o.id || idx;
                           const total = poll.options.reduce(
                             (sum, x) => sum + (x.votes || 0),
-                            0
+                            0,
                           );
                           const pct = total
                             ? Math.round((o.votes / total) * 100)
                             : 0;
                           const isSelected =
-                            poll.votesBy[currentUser.email] === (o._id || o.id);
+                            poll.votesBy.get(currentUser.email) ===
+                            (o._id || o.id);
                           return (
                             <div
                               key={key}
@@ -339,7 +340,7 @@ const MemberPanel = () => {
                     (c) =>
                       c.userEmail === currentUser.email ||
                       (c.name === currentUser.name &&
-                        c.flatNo === currentUser.flatNo)
+                        c.flatNo === currentUser.flatNo),
                   )
                   .map((c) => (
                     <div
@@ -356,8 +357,8 @@ const MemberPanel = () => {
                           c.status === "Open"
                             ? "bg-red-500 text-red-900"
                             : c.status === "In Progress"
-                            ? "bg-yellow-500 text-yellow-900"
-                            : "bg-green-500 text-green-900"
+                              ? "bg-yellow-500 text-yellow-900"
+                              : "bg-green-500 text-green-900"
                         }`}>
                         {c.status}
                       </span>

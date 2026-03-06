@@ -29,7 +29,7 @@ export const monthLabel = (d = new Date()) =>
 export const DataProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem("token") || null);
   const [currentUser, setCurrentUser] = useState(
-    JSON.parse(localStorage.getItem("user")) || null
+    JSON.parse(localStorage.getItem("user")) || null,
   );
 
   // Data States
@@ -50,13 +50,15 @@ export const DataProvider = ({ children }) => {
     if (token) {
       axios.defaults.headers.common["Authorization"] = token;
       localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(currentUser));
+      if (currentUser)
+        localStorage.setItem("user", JSON.stringify(currentUser));
       fetchInitialData();
     } else {
       delete axios.defaults.headers.common["Authorization"];
       localStorage.removeItem("token");
       localStorage.removeItem("user");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   // Fetch Dashboard Data
@@ -202,19 +204,18 @@ export const DataProvider = ({ children }) => {
     }
   };
 
-  const votePoll = async (optionId, userEmail) => {
+  const votePoll = async (optionIndex, userEmail) => {
     try {
-      // In DB we store option._id, but UI might be passing generated IDs.
-      // Ensure UI passes the correct mongoose SubDocument ID if available, or handle mapping.
-      // For this implementation, we assume optionId matches.
       const res = await axios.put(`${API_URL}/poll/vote`, {
         pollId: poll._id,
-        optionId,
+        optionIndex,
         userEmail,
       });
       setPoll(res.data);
+      return true; // Success
     } catch (err) {
       alert(err.response?.data?.msg || "Vote failed");
+      return false; // Failure
     }
   };
 
