@@ -8,15 +8,7 @@ const mongoose = require("mongoose");
 const MaintenanceSchema = new mongoose.Schema({
   monthKey: String,
   amount: Number,
-  records: {
-    type: Map,
-    of: new mongoose.Schema({
-      status: String,
-      txnId: String,
-      updatedAt: Date,
-    }),
-    default: {},
-  },
+  records: Object,
 });
 
 module.exports = mongoose.model("Maintenance", MaintenanceSchema);

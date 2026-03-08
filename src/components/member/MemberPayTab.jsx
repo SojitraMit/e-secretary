@@ -6,7 +6,8 @@ const MemberPayTab = () => {
   const { currentUser, maintenance, updateMaintenanceStatus } = useData();
 
   const records = maintenance.records || {};
-  const myMaint = records[currentUser.email] || { status: "Pending" };
+  const safeEmail = currentUser.email.replace(/\./g, ",");
+  const myMaint = records[safeEmail] || { status: "Pending" };
   const maintAmount = maintenance.amount || 2500;
 
   const loadRazorpayScript = (src) => {
@@ -38,9 +39,14 @@ const MemberPayTab = () => {
       image:
         "https://lh3.googleusercontent.com/gg/AIJ2gl9SltPPuk8sHuP9SzOTJUjgmnjrD1005_Sn-YItojA7pubhH9IXYPnjPVUgM4kJuj9zcxhqRjRdfiPCRp4BNgLr1wKfCMOGc6hat95dALBjEPOS3p0wC4QsE034zCuZaS1saE4ck3hOQU7f0lRPtKu9dTplJnV4flTIWasvydQscwOxAzm0BuMBY3UuRL4_K4EZj4NQPDTsYH6KX3INKBu4GaBTj7cv6wfxmJaVpwom-H4Mgp243uXqyAOL2ioCuhJQV66qGRh6S3hPFlP9oq3vbK7K2XsXqMHMO_A10ybmU3neh5_gF-z7uFX7Unw6hoJtZZYoSLtzWuGJWjsYodw=s1024-rj",
 
-      handler: function (response) {
-        alert("Payment Successful!");
+      handler: async function (response) {
         console.log("Payment ID:", response.razorpay_payment_id);
+
+        // Update maintenance status after successful payment
+        await updateMaintenanceStatus(currentUser.email, "Paid", {
+          txnId: response.razorpay_payment_id,
+        });
+        toast.success("Payment Recorded!");
       },
 
       theme: {
@@ -50,10 +56,6 @@ const MemberPayTab = () => {
 
     const paymentObject = new window.Razorpay(options);
     paymentObject.open();
-    // Demo payment
-    const txn = "UPI-" + Math.random().toString(36).slice(2, 10).toUpperCase();
-    updateMaintenanceStatus(currentUser.email, "Paid", { txnId: txn });
-    toast.success("Payment Recorded!");
   };
 
   return (

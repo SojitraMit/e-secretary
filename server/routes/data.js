@@ -191,46 +191,58 @@ router.get("/maintenance/:monthKey", async (req, res) => {
     return res.json({
       monthKey: req.params.monthKey,
       amount: 2500,
-      records: new Map(),
+      records: {},
     });
-  }
-  // Ensure records is a Map
-  if (!(data.records instanceof Map)) {
-    data.records = new Map(Object.entries(data.records || {}));
-    data.markModified("records");
-    await data.save();
   }
   res.json(data);
 });
 
 router.post("/maintenance", async (req, res) => {
   try {
+    console.log("Maintenance update request:", req.body);
     const { monthKey, email, status, txnId } = req.body;
 
     let maint = await Maintenance.findOne({ monthKey });
+    console.log("Found maintenance:", maint);
 
     if (!maint) {
-      maint = new Maintenance({ monthKey, amount: 2500, records: new Map() });
+      maint = new Maintenance({ monthKey, amount: 2500, records: {} });
+      console.log("Created new maintenance:", maint);
     }
 
-    // Use Map methods (.get/.set) for proper Mongoose handling
-    const currentRecord = maint.records.get(email) || {};
+    // Ensure records is an object
+    if (!maint.records) {
+      maint.records = {};
+    }
 
-    maint.records.set(email, {
+    // Update the record
+    const safeEmail = email.replace(/\./g, ",");
+
+    const currentRecord = maint.records[safeEmail] || {};
+
+    console.log("Current record for", email, ":", currentRecord);
+
+    maint.records[safeEmail] = {
       ...currentRecord,
       status,
       txnId,
       updatedAt: new Date(),
-    });
+    };
 
-    // IMPORTANT: tell mongoose object changed
-    maint.markModified("records");
+    console.log("Updated records:", maint.records);
 
-    await maint.save();
+    try {
+      maint.markModified("records");
+      await maint.save();
+      console.log("Saved maintenance successfully");
+    } catch (saveErr) {
+      console.error("Save error:", saveErr);
+      throw saveErr;
+    }
 
     res.json(maint);
   } catch (err) {
-    console.error(err);
+    console.error("Maintenance update error:", err);
     res.status(500).json({ message: err.message });
   }
 });

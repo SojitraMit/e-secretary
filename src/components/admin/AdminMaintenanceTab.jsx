@@ -30,10 +30,12 @@ const AdminMaintenanceTab = () => {
             {users
               .sort((a, b) => a.flatNo.localeCompare(b.flatNo))
               .map((u) => {
+                const safeEmail = u.email.replace(/\./g, ",");
+
                 const rec =
                   records instanceof Map
-                    ? records.get(u.email)
-                    : records[u.email];
+                    ? records.get(safeEmail)
+                    : records[safeEmail];
 
                 const record = rec || { status: "Pending" };
                 const isPaid = record.status === "Paid";
