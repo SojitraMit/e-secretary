@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 const DataContext = createContext();
 
@@ -41,7 +42,7 @@ export const DataProvider = ({ children }) => {
   const [suggestions, setSuggestions] = useState([]);
   const [poll, setPoll] = useState(null);
   const [maintenance, setMaintenance] = useState({
-    defaultAmount: 2500,
+    amount: 2500,
     records: {},
   });
 
@@ -100,7 +101,7 @@ export const DataProvider = ({ children }) => {
       setCurrentUser(res.data.user);
       return true;
     } catch (err) {
-      alert(err.response?.data?.message || "Login Failed");
+      toast.error(err.response?.data?.message || "Login Failed");
       return false;
     }
   };
@@ -111,7 +112,7 @@ export const DataProvider = ({ children }) => {
       // Auto login after signup
       return login(userObj.email, userObj.password, false);
     } catch (err) {
-      alert(err.response?.data?.message || "Signup Failed");
+      toast.error(err.response?.data?.message || "Signup Failed");
       return false;
     }
   };
@@ -214,7 +215,7 @@ export const DataProvider = ({ children }) => {
       setPoll(res.data);
       return true; // Success
     } catch (err) {
-      alert(err.response?.data?.msg || "Vote failed");
+      toast.error(err.response?.data?.msg || "Vote failed");
       return false; // Failure
     }
   };
@@ -233,12 +234,16 @@ export const DataProvider = ({ children }) => {
     try {
       const mk = monthKey();
       const payload = { monthKey: mk, email, status, ...extra };
+
+      console.log("Sending payload:", payload);
+
       const res = await axios.post(`${API_URL}/maintenance`, payload);
-      // We need to merge the new record into local state for immediate UI update
-      // But the API returns the whole maintenance object for that month
+
+      console.log("API response:", res.data);
+
       setMaintenance(res.data);
     } catch (err) {
-      console.error(err);
+      console.error("Maintenance update error:", err.response || err);
     }
   };
 

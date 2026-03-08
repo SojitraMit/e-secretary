@@ -1,5 +1,6 @@
 import React from "react";
 import { useData, formatINR, monthLabel } from "../../DataContext";
+import toast from "react-hot-toast";
 
 const MemberPayTab = () => {
   const { currentUser, maintenance, updateMaintenanceStatus } = useData();
@@ -8,11 +9,51 @@ const MemberPayTab = () => {
   const myMaint = records[currentUser.email] || { status: "Pending" };
   const maintAmount = maintenance.amount || 2500;
 
-  const handlePay = () => {
+  const loadRazorpayScript = (src) => {
+    return new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = src;
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const handlePay = async () => {
+    const isLoaded = await loadRazorpayScript(
+      "https://checkout.razorpay.com/v1/checkout.js",
+    );
+
+    if (!isLoaded) {
+      alert("Razorpay SDK failed to load");
+      return;
+    }
+
+    const options = {
+      key: "rzp_test_VSdp7X3K39GwBK", // TEST KEY
+      amount: maintAmount * 100, // paise
+      currency: "INR",
+      name: "Shop It",
+      description: "Thank you for shopping with us",
+      image:
+        "https://lh3.googleusercontent.com/gg/AIJ2gl9SltPPuk8sHuP9SzOTJUjgmnjrD1005_Sn-YItojA7pubhH9IXYPnjPVUgM4kJuj9zcxhqRjRdfiPCRp4BNgLr1wKfCMOGc6hat95dALBjEPOS3p0wC4QsE034zCuZaS1saE4ck3hOQU7f0lRPtKu9dTplJnV4flTIWasvydQscwOxAzm0BuMBY3UuRL4_K4EZj4NQPDTsYH6KX3INKBu4GaBTj7cv6wfxmJaVpwom-H4Mgp243uXqyAOL2ioCuhJQV66qGRh6S3hPFlP9oq3vbK7K2XsXqMHMO_A10ybmU3neh5_gF-z7uFX7Unw6hoJtZZYoSLtzWuGJWjsYodw=s1024-rj",
+
+      handler: function (response) {
+        alert("Payment Successful!");
+        console.log("Payment ID:", response.razorpay_payment_id);
+      },
+
+      theme: {
+        color: "#ef4444",
+      },
+    };
+
+    const paymentObject = new window.Razorpay(options);
+    paymentObject.open();
     // Demo payment
     const txn = "UPI-" + Math.random().toString(36).slice(2, 10).toUpperCase();
     updateMaintenanceStatus(currentUser.email, "Paid", { txnId: txn });
-    alert("Payment Recorded!");
+    toast.success("Payment Recorded!");
   };
 
   return (

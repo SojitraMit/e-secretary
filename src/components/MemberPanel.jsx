@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import toast from "react-hot-toast";
 import { useData, formatINR, monthKey, monthLabel } from "../DataContext";
 import ReceiptModal from "./ReceiptModal";
 
@@ -41,18 +42,18 @@ const MemberPanel = () => {
     if (!complaintText.trim()) return;
     addComplaint(complaintText, currentUser);
     setComplaintText("");
-    alert("Complaint Submitted");
+    toast.success("Complaint Submitted");
   };
 
   const handleSuggestionSubmit = () => {
     if (!suggestionText.trim()) return;
     addSuggestion(suggestionText, currentUser);
     setSuggestionText("");
-    alert("Suggestion Sent");
+    toast.success("Suggestion Sent");
   };
 
   const handleVote = () => {
-    if (!pollSelection) return alert("Select an option");
+    if (!pollSelection) return toast.error("Select an option");
     votePoll(pollSelection, currentUser.email);
   };
 
@@ -60,7 +61,7 @@ const MemberPanel = () => {
     // Demo payment
     const txn = "UPI-" + Math.random().toString(36).slice(2, 10).toUpperCase();
     updateMaintenanceStatus(currentUser.email, "Paid", { txnId: txn });
-    alert("Payment Recorded!");
+    toast.success("Payment Recorded!");
   };
 
   const openReceipt = (bill) => {

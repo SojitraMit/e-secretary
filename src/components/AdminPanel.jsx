@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import toast from "react-hot-toast";
 import { useData, formatINR, monthKey, monthLabel } from "../DataContext";
 import ReceiptModal from "./ReceiptModal";
 
@@ -47,23 +48,23 @@ const AdminPanel = () => {
 
   const handleFundSave = () => {
     const val = parseInt(fundInput.replace(/,/g, ""), 10);
-    if (isNaN(val) || val < 0) return alert("Invalid amount");
+    if (isNaN(val) || val < 0) return toast.error("Invalid amount");
     updateFunds(val, "Admin");
     setFundInput("");
-    alert("Funds Updated");
+    toast.success("Funds Updated");
   };
 
   const handlePostUpdate = () => {
     if (!updateText.trim()) return;
     addUpdate(updateText);
     setUpdateText("");
-    alert("Update Posted");
+    toast.success("Update Posted");
   };
 
   const handlePollSave = () => {
     const cleanOpts = pollOpts.filter((o) => o.trim() !== "");
     if (!pollQ || cleanOpts.length < 2)
-      return alert("Need question and 2+ options");
+      return toast.error("Need question and 2+ options");
 
     if (poll && poll.isActive) {
       if (!window.confirm("Replace active poll? Votes will reset.")) return;
@@ -75,7 +76,7 @@ const AdminPanel = () => {
       isActive: true,
     };
     savePoll(newPoll);
-    alert("Poll is live!");
+    toast.success("Poll is live!");
   };
 
   const closePoll = () => {
@@ -85,11 +86,11 @@ const AdminPanel = () => {
     // Ideally use the closePoll method from context if available, or update status manually.
     // Using the update pattern from your previous context:
     savePoll({ ...poll, isActive: false });
-    alert("Poll closed");
+    toast.success("Poll closed");
   };
 
   const handleBillUpload = () => {
-    if (!billName) return alert("Enter event name");
+    if (!billName) return toast.error("Enter event name");
     if (billFile) {
       const reader = new FileReader();
       reader.onload = () => {
@@ -101,13 +102,13 @@ const AdminPanel = () => {
         });
         setBillName("");
         setBillFile(null);
-        alert("Bill Uploaded");
+        toast.success("Bill Uploaded");
       };
       reader.readAsDataURL(billFile);
     } else {
       addBill({ eventName: billName, fileName: "No File", fileData: null });
       setBillName("");
-      alert("Bill Record Created");
+      toast.success("Bill Record Created");
     }
   };
 
@@ -120,7 +121,7 @@ const AdminPanel = () => {
     (u) =>
       u.name.toLowerCase().includes(memberSearch.toLowerCase()) ||
       u.email.toLowerCase().includes(memberSearch.toLowerCase()) ||
-      (u.flatNo && u.flatNo.toLowerCase().includes(memberSearch.toLowerCase()))
+      (u.flatNo && u.flatNo.toLowerCase().includes(memberSearch.toLowerCase())),
   );
 
   return (
@@ -306,7 +307,7 @@ const AdminPanel = () => {
                     {poll.options.map((o) => {
                       const total = poll.options.reduce(
                         (sum, x) => sum + (x.votes || 0),
-                        0
+                        0,
                       );
                       const pct = total
                         ? Math.round((o.votes / total) * 100)
@@ -435,7 +436,9 @@ const AdminPanel = () => {
                                 updateMaintenanceStatus(
                                   u.email,
                                   isPaid ? "Pending" : "Paid",
-                                  isPaid ? {} : { txnId: "ADMIN-" + Date.now() }
+                                  isPaid
+                                    ? {}
+                                    : { txnId: "ADMIN-" + Date.now() },
                                 )
                               }
                               className="text-blue-400 hover:underline text-sm">
@@ -514,8 +517,8 @@ const AdminPanel = () => {
                           c.status === "Open"
                             ? "bg-red-500 text-red-900"
                             : c.status === "In Progress"
-                            ? "bg-yellow-500 text-yellow-900"
-                            : "bg-green-500 text-green-900"
+                              ? "bg-yellow-500 text-yellow-900"
+                              : "bg-green-500 text-green-900"
                         }`}>
                         {c.status}
                       </span>
@@ -524,7 +527,7 @@ const AdminPanel = () => {
                           onClick={() =>
                             updateComplaintStatus(
                               c._id,
-                              c.status === "Open" ? "In Progress" : "Resolved"
+                              c.status === "Open" ? "In Progress" : "Resolved",
                             )
                           }
                           className="btn bg-yellow-500 text-yellow-900 text-sm">

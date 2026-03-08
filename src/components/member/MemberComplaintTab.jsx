@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import toast from "react-hot-toast";
 import { useData } from "../../DataContext";
 
 const MemberComplaintTab = () => {
@@ -9,7 +10,7 @@ const MemberComplaintTab = () => {
     if (!complaintText.trim()) return;
     addComplaint(complaintText, currentUser);
     setComplaintText("");
-    alert("Complaint Submitted");
+    toast.success("Complaint Submitted");
   };
 
   return (

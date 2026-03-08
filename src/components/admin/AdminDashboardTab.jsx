@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import toast from "react-hot-toast";
 import { useData, formatINR } from "../../DataContext";
 
 const AdminDashboardTab = () => {
@@ -7,10 +8,10 @@ const AdminDashboardTab = () => {
 
   const handleFundSave = () => {
     const val = parseInt(fundInput.replace(/,/g, ""), 10);
-    if (isNaN(val) || val < 0) return alert("Invalid amount");
+    if (isNaN(val) || val < 0) return toast.error("Invalid amount");
     updateFunds(val);
     setFundInput("");
-    alert("Funds Updated");
+    toast.success("Funds Updated");
   };
 
   return (

@@ -11,6 +11,7 @@ import Signup from "./pages/Signup";
 import AdminDashboard from "./pages/AdminDashboard";
 import MemberDashboard from "./pages/MemberDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { Toaster } from "react-hot-toast";
 
 const AppContent = () => {
   const { currentUser } = useData();
@@ -77,11 +78,14 @@ const AppContent = () => {
 
 function App() {
   return (
-    <DataProvider>
-      <div className="min-h-screen text-gray-200 bg-gray-900 font-inter">
-        <AppContent />
-      </div>
-    </DataProvider>
+    <>
+      <DataProvider>
+        <div className="min-h-screen text-gray-200 bg-gray-900 font-inter">
+          <AppContent />
+        </div>
+      </DataProvider>
+      <Toaster />
+    </>
   );
 }
 

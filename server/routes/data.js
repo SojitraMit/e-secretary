@@ -187,29 +187,51 @@ router.put("/poll/close/:id", async (req, res) => {
 // Maintenance
 router.get("/maintenance/:monthKey", async (req, res) => {
   const data = await Maintenance.findOne({ monthKey: req.params.monthKey });
-  res.json(
-    data || { monthKey: req.params.monthKey, amount: 2500, records: {} },
-  );
+  if (!data) {
+    return res.json({
+      monthKey: req.params.monthKey,
+      amount: 2500,
+      records: new Map(),
+    });
+  }
+  // Ensure records is a Map
+  if (!(data.records instanceof Map)) {
+    data.records = new Map(Object.entries(data.records || {}));
+    data.markModified("records");
+    await data.save();
+  }
+  res.json(data);
 });
 
 router.post("/maintenance", async (req, res) => {
-  const { monthKey, email, status, txnId } = req.body;
-  let maint = await Maintenance.findOne({ monthKey });
+  try {
+    const { monthKey, email, status, txnId } = req.body;
 
-  if (!maint) {
-    maint = new Maintenance({ monthKey, amount: 2500, records: {} });
+    let maint = await Maintenance.findOne({ monthKey });
+
+    if (!maint) {
+      maint = new Maintenance({ monthKey, amount: 2500, records: new Map() });
+    }
+
+    // Use Map methods (.get/.set) for proper Mongoose handling
+    const currentRecord = maint.records.get(email) || {};
+
+    maint.records.set(email, {
+      ...currentRecord,
+      status,
+      txnId,
+      updatedAt: new Date(),
+    });
+
+    // IMPORTANT: tell mongoose object changed
+    maint.markModified("records");
+
+    await maint.save();
+
+    res.json(maint);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
   }
-
-  const currentRecord = maint.records.get(email) || {};
-  maint.records.set(email, {
-    ...currentRecord,
-    status,
-    txnId,
-    updatedAt: new Date(),
-  });
-
-  await maint.save();
-  res.json(maint);
 });
-
 module.exports = router;

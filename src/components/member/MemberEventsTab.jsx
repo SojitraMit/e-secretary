@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import toast from "react-hot-toast";
 import { useData } from "../../DataContext";
 
 const MemberEventsTab = () => {
@@ -11,14 +12,14 @@ const MemberEventsTab = () => {
     if (!suggestionText.trim()) return;
     addSuggestion(suggestionText, currentUser);
     setSuggestionText("");
-    alert("Suggestion Sent");
+    toast.success("Suggestion Sent");
   };
 
   const handleVote = async () => {
-    if (pollSelection === null) return alert("Select an option");
+    if (pollSelection === null) return toast.error("Select an option");
 
     if (hasVoted) {
-      return alert("You already voted");
+      return toast.error("You already voted");
     }
 
     setIsVoting(true);

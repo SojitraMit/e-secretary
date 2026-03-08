@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import toast from "react-hot-toast";
 import { useData } from "../DataContext";
 import { Link } from "react-router-dom";
 
@@ -17,7 +18,7 @@ const Signup = () => {
       flatNo: sFlat,
       password: sPass,
     });
-    if (!success) alert("Email already exists.");
+    if (!success) toast.error("Email already exists.");
   };
 
   return (

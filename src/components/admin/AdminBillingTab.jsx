@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import toast from "react-hot-toast";
 import { useData } from "../../DataContext";
 import ReceiptModal from "../ReceiptModal";
 
@@ -10,7 +11,7 @@ const AdminBillingTab = () => {
   const [billFile, setBillFile] = useState(null);
 
   const handleBillUpload = () => {
-    if (!billName.trim()) return alert("Enter event name");
+    if (!billName.trim()) return toast.error("Enter event name");
     if (billFile) {
       const reader = new FileReader();
       reader.onload = () => {
@@ -22,13 +23,13 @@ const AdminBillingTab = () => {
         });
         setBillName("");
         setBillFile(null);
-        alert("Bill Uploaded");
+        toast.success("Bill Uploaded");
       };
       reader.readAsDataURL(billFile);
     } else {
       addBill({ eventName: billName, fileName: "No File", fileData: null });
       setBillName("");
-      alert("Bill Record Created");
+      toast.success("Bill Record Created");
     }
   };
 

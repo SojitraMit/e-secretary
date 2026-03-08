@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import toast from "react-hot-toast";
 import { useData } from "../../DataContext";
 
 const AdminEventsTab = () => {
@@ -8,7 +9,7 @@ const AdminEventsTab = () => {
 
   const handlePollSave = () => {
     if (!pollQ.trim() || pollOpts.filter((o) => o.trim()).length < 2) {
-      return alert("Poll needs a question and at least 2 options");
+      return toast.error("Poll needs a question and at least 2 options");
     }
     savePoll({
       question: pollQ,
@@ -18,13 +19,13 @@ const AdminEventsTab = () => {
     });
     setPollQ("");
     setPollOpts(["", ""]);
-    alert("Poll Saved");
+    toast.success("Poll Saved");
   };
 
   const closePollHandler = () => {
     if (!poll) return;
     closePoll();
-    alert("Poll Closed");
+    toast.success("Poll Closed");
   };
 
   return (

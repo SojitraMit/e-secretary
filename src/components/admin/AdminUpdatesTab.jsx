@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import toast from "react-hot-toast";
 import { useData } from "../../DataContext";
 
 const AdminUpdatesTab = () => {
@@ -9,7 +10,7 @@ const AdminUpdatesTab = () => {
     if (!updateText.trim()) return;
     addUpdate(updateText);
     setUpdateText("");
-    alert("Update Posted");
+    toast.success("Update Posted");
   };
 
   return (

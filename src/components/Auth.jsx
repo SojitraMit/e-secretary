@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useData } from "../DataContext";
+import toast from "react-hot-toast";
 
 const Auth = () => {
   const { login, signup } = useData();
@@ -29,7 +30,7 @@ const Auth = () => {
       flatNo: sFlat,
       password: sPass,
     });
-    if (!success) alert("Email already exists.");
+    if (!success) toast.error("Email already exists.");
   };
 
   return (
