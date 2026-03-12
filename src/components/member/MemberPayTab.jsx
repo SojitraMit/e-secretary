@@ -31,11 +31,11 @@ const MemberPayTab = () => {
     }
 
     const options = {
-      key: "rzp_test_VSdp7X3K39GwBK", // TEST KEY
-      amount: maintAmount * 100, // paise
+      key: "rzp_test_VSdp7X3K39GwBK",
+      amount: maintAmount * 100,
       currency: "INR",
-      name: "Shop It",
-      description: "Thank you for shopping with us",
+      name: "e-Secretary",
+      description: "Maintenance Payment",
       image:
         "https://lh3.googleusercontent.com/gg/AIJ2gl9SltPPuk8sHuP9SzOTJUjgmnjrD1005_Sn-YItojA7pubhH9IXYPnjPVUgM4kJuj9zcxhqRjRdfiPCRp4BNgLr1wKfCMOGc6hat95dALBjEPOS3p0wC4QsE034zCuZaS1saE4ck3hOQU7f0lRPtKu9dTplJnV4flTIWasvydQscwOxAzm0BuMBY3UuRL4_K4EZj4NQPDTsYH6KX3INKBu4GaBTj7cv6wfxmJaVpwom-H4Mgp243uXqyAOL2ioCuhJQV66qGRh6S3hPFlP9oq3vbK7K2XsXqMHMO_A10ybmU3neh5_gF-z7uFX7Unw6hoJtZZYoSLtzWuGJWjsYodw=s1024-rj",
 
