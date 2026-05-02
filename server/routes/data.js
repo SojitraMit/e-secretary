@@ -240,6 +240,46 @@ router.post("/maintenance", async (req, res) => {
       throw saveErr;
     }
 
+    // Adjust funds when status changes: increment on Paid, decrement when reverting Paid->Pending
+    if (status === "Paid" && currentRecord.status !== "Paid") {
+      try {
+        let fund = await Funds.findOne().sort({ _id: -1 });
+        if (!fund) {
+          fund = new Funds({ balance: 0 });
+        }
+        const increment = maint.amount || 0;
+        fund.balance = (fund.balance || 0) + increment;
+        fund.updatedBy = email;
+        fund.updatedAt = new Date();
+        await fund.save();
+        console.log("Funds updated by maintenance payment:", increment);
+      } catch (fundErr) {
+        console.error(
+          "Error updating funds after maintenance payment:",
+          fundErr,
+        );
+        // nonfatal; continue
+      }
+    } else if (status === "Pending" && currentRecord.status === "Paid") {
+      try {
+        let fund = await Funds.findOne().sort({ _id: -1 });
+        if (!fund) {
+          fund = new Funds({ balance: 0 });
+        }
+        const decrement = maint.amount || 0;
+        fund.balance = Math.max((fund.balance || 0) - decrement, 0);
+        fund.updatedBy = email;
+        fund.updatedAt = new Date();
+        await fund.save();
+        console.log("Funds decremented by maintenance reversal:", decrement);
+      } catch (fundErr) {
+        console.error(
+          "Error decrementing funds after maintenance reversal:",
+          fundErr,
+        );
+      }
+    }
+
     res.json(maint);
   } catch (err) {
     console.error("Maintenance update error:", err);

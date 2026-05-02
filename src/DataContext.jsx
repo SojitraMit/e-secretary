@@ -242,6 +242,9 @@ export const DataProvider = ({ children }) => {
       console.log("API response:", res.data);
 
       setMaintenance(res.data);
+
+      // refresh full data on any status change so funds balance stays current
+      fetchInitialData();
     } catch (err) {
       console.error("Maintenance update error:", err.response || err);
     }
