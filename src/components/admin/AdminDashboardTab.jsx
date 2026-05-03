@@ -5,11 +5,12 @@ import { useData, formatINR } from "../../DataContext";
 const AdminDashboardTab = () => {
   const { funds, users, complaints, updateFunds } = useData();
   const [fundInput, setFundInput] = useState("");
+  const transactions = funds.transactions || [];
 
   const handleFundSave = () => {
     const val = parseInt(fundInput.replace(/,/g, ""), 10);
     if (isNaN(val) || val < 0) return toast.error("Invalid amount");
-    updateFunds(val);
+    updateFunds(val, "Admin");
     setFundInput("");
     toast.success("Funds Updated");
   };
@@ -50,6 +51,39 @@ const AdminDashboardTab = () => {
             Save Funds
           </button>
         </div>
+      </div>
+      <div className="section-card mt-6">
+        <h2 className="text-xl font-semibold mb-4">Fund Activity</h2>
+        {transactions.length === 0 ? (
+          <p className="text-gray-400">No fund activity yet.</p>
+        ) : (
+          <div className="space-y-3">
+            {transactions.slice(0, 5).map((tx, idx) => (
+              <div
+                key={idx}
+                className="p-3 bg-gray-700 rounded-lg flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold">
+                    {tx.type} {tx.amount > 0 ? "Credit" : "Debit"}
+                  </span>
+                  <span className="text-sm text-gray-300">
+                    {new Date(tx.createdAt).toLocaleString()}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-300">{tx.description}</p>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-400">{tx.source}</span>
+                  <span
+                    className={
+                      tx.amount > 0 ? "text-green-400" : "text-red-400"
+                    }>
+                    {formatINR(tx.amount)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

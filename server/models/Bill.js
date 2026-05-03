@@ -1,7 +1,8 @@
 const mongoose = require("mongoose");
 
 const BillSchema = new mongoose.Schema({
-  eventName: String,
+  eventName: { type: String, required: true },
+  amount: { type: Number, required: true, default: 0 },
   fileName: String,
   fileData: String,
   fileType: String,

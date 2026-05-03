@@ -10,9 +10,14 @@ const ReceiptModal = ({ isOpen, onClose, bill }) => {
       <div className="absolute inset-0 bg-black/70" onClick={onClose}></div>
       <div className="relative z-10 bg-gray-800 border border-gray-700 rounded-xl max-w-3xl w-[92%] max-h-[80vh] flex flex-col">
         <div className="flex items-center justify-between p-3 border-b border-gray-700">
-          <h3 className="font-semibold text-lg text-white">
-            {bill.eventName} - {bill.fileName}
-          </h3>
+          <div>
+            <h3 className="font-semibold text-lg text-white">
+              {bill.eventName} - {bill.fileName}
+            </h3>
+            {bill.amount != null && (
+              <p className="text-sm text-gray-300">Amount: ₹{bill.amount}</p>
+            )}
+          </div>
           <button className="btn bg-gray-700 text-gray-200" onClick={onClose}>
             <i className="fa fa-times"></i>
           </button>

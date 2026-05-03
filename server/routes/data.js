@@ -14,8 +14,6 @@ const {
 
 // Helper functions for email encoding/decoding
 const encodeEmail = (email) => Buffer.from(email).toString("base64");
-const decodeEmail = (encoded) =>
-  Buffer.from(encoded, "base64").toString("utf-8");
 
 // Apply middleware to all routes in this router
 router.use(verifyToken);
@@ -35,7 +33,7 @@ router.get("/data", async (req, res) => {
 
   res.json({
     users,
-    funds: funds || { balance: 0 },
+    funds: funds || { balance: 0, transactions: [] },
     complaints,
     updates,
     bills,
@@ -70,9 +68,34 @@ router.post("/updates", async (req, res) => {
 
 // Funds
 router.post("/funds", async (req, res) => {
-  const newF = new Funds(req.body);
-  await newF.save();
-  res.json(newF);
+  try {
+    const { balance, updatedBy, transaction } = req.body;
+    let fund = await Funds.findOne().sort({ _id: -1 });
+
+    if (!fund) {
+      fund = new Funds({
+        balance: balance || 0,
+        updatedBy,
+        updatedAt: new Date(),
+        transactions: [],
+      });
+    } else {
+      fund.balance = typeof balance === "number" ? balance : fund.balance;
+      fund.updatedBy = updatedBy;
+      fund.updatedAt = new Date();
+    }
+
+    if (transaction) {
+      fund.transactions = fund.transactions || [];
+      fund.transactions.unshift(transaction);
+    }
+
+    await fund.save();
+    res.json(fund);
+  } catch (err) {
+    console.error("Funds update error:", err);
+    res.status(500).json({ message: err.message });
+  }
 });
 
 // Suggestions
@@ -84,9 +107,47 @@ router.post("/suggestions", async (req, res) => {
 
 // Bills
 router.post("/bills", async (req, res) => {
-  const newB = new Bill(req.body);
-  await newB.save();
-  res.json(newB);
+  try {
+    const { eventName, amount, fileName, fileData, fileType } = req.body;
+    const billAmount = Number(amount) || 0;
+    const newB = new Bill({
+      eventName,
+      amount: billAmount,
+      fileName,
+      fileData,
+      fileType,
+    });
+
+    await newB.save();
+
+    let fund = await Funds.findOne().sort({ _id: -1 });
+    if (!fund) {
+      fund = new Funds({ balance: 0, transactions: [] });
+    }
+
+    const newBalance = (fund.balance || 0) - billAmount;
+    const transaction = {
+      type: "Bill",
+      amount: -billAmount,
+      source: eventName || "Bill",
+      eventName,
+      description: `Bill created for ${eventName} (${billAmount})`,
+      balanceAfter: newBalance,
+      createdAt: new Date(),
+    };
+
+    fund.balance = newBalance;
+    fund.updatedBy = "Admin";
+    fund.updatedAt = new Date();
+    fund.transactions = fund.transactions || [];
+    fund.transactions.unshift(transaction);
+    await fund.save();
+
+    res.json({ bill: newB.toObject(), fund: fund.toObject() });
+  } catch (err) {
+    console.error("Bill creation error:", err);
+    res.status(500).json({ message: err.message });
+  }
 });
 
 // Polls
@@ -245,12 +306,23 @@ router.post("/maintenance", async (req, res) => {
       try {
         let fund = await Funds.findOne().sort({ _id: -1 });
         if (!fund) {
-          fund = new Funds({ balance: 0 });
+          fund = new Funds({ balance: 0, transactions: [] });
         }
         const increment = maint.amount || 0;
-        fund.balance = (fund.balance || 0) + increment;
+        const newBalance = (fund.balance || 0) + increment;
+        const transaction = {
+          type: "Maintenance",
+          amount: increment,
+          source: email,
+          description: `Maintenance payment received from ${email}`,
+          balanceAfter: newBalance,
+          createdAt: new Date(),
+        };
+        fund.balance = newBalance;
         fund.updatedBy = email;
         fund.updatedAt = new Date();
+        fund.transactions = fund.transactions || [];
+        fund.transactions.unshift(transaction);
         await fund.save();
         console.log("Funds updated by maintenance payment:", increment);
       } catch (fundErr) {
@@ -264,12 +336,23 @@ router.post("/maintenance", async (req, res) => {
       try {
         let fund = await Funds.findOne().sort({ _id: -1 });
         if (!fund) {
-          fund = new Funds({ balance: 0 });
+          fund = new Funds({ balance: 0, transactions: [] });
         }
         const decrement = maint.amount || 0;
-        fund.balance = Math.max((fund.balance || 0) - decrement, 0);
+        const newBalance = Math.max((fund.balance || 0) - decrement, 0);
+        const transaction = {
+          type: "Maintenance",
+          amount: -decrement,
+          source: email,
+          description: `Maintenance payment reverted for ${email}`,
+          balanceAfter: newBalance,
+          createdAt: new Date(),
+        };
+        fund.balance = newBalance;
         fund.updatedBy = email;
         fund.updatedAt = new Date();
+        fund.transactions = fund.transactions || [];
+        fund.transactions.unshift(transaction);
         await fund.save();
         console.log("Funds decremented by maintenance reversal:", decrement);
       } catch (fundErr) {
