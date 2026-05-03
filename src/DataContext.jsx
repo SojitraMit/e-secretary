@@ -35,7 +35,7 @@ export const DataProvider = ({ children }) => {
 
   // Data States
   const [users, setUsers] = useState([]);
-  const [funds, setFunds] = useState({ balance: 0 });
+  const [funds, setFunds] = useState({ balance: 0, transactions: [] });
   const [complaints, setComplaints] = useState([]);
   const [updates, setUpdates] = useState([]);
   const [bills, setBills] = useState([]);
@@ -126,10 +126,24 @@ export const DataProvider = ({ children }) => {
 
   const updateFunds = async (amount, updatedBy) => {
     try {
-      const res = await axios.post(`${API_URL}/funds`, {
+      const delta = amount - (funds.balance || 0);
+      const payload = {
         balance: amount,
         updatedBy,
-      });
+      };
+
+      if (delta !== 0) {
+        payload.transaction = {
+          type: "Manual",
+          amount: delta,
+          source: updatedBy,
+          description: `Manual fund adjustment by ${updatedBy}`,
+          balanceAfter: amount,
+          createdAt: new Date(),
+        };
+      }
+
+      const res = await axios.post(`${API_URL}/funds`, payload);
       setFunds(res.data);
     } catch (err) {
       console.error(err);
@@ -190,7 +204,13 @@ export const DataProvider = ({ children }) => {
   const addBill = async (billObj) => {
     try {
       const res = await axios.post(`${API_URL}/bills`, billObj);
-      setBills([res.data, ...bills]);
+      const createdBill = res.data?.bill ?? res.data;
+      if (createdBill) {
+        setBills((prevBills) => [createdBill, ...prevBills].filter(Boolean));
+      }
+      if (res.data?.fund) {
+        setFunds(res.data.fund);
+      }
     } catch (err) {
       console.error(err);
     }
