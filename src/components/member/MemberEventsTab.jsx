@@ -30,12 +30,47 @@ const MemberEventsTab = () => {
     setIsVoting(false);
   };
 
-  const hasVoted = poll?.votesBy?.[btoa(currentUser.email)] !== undefined;
+  const encodedEmail = currentUser ? btoa(currentUser.email) : null;
+  const userVote = poll?.votesBy
+    ? typeof poll.votesBy.get === "function"
+      ? poll.votesBy.get(encodedEmail)
+      : poll.votesBy[encodedEmail]
+    : undefined;
+  const hasVoted = userVote !== undefined;
+
+  const renderPollResults = () => {
+    const total = poll.options.reduce((sum, x) => sum + (x.votes || 0), 0);
+    return poll.options.map((o, idx) => {
+      const pct = total ? Math.round((o.votes / total) * 100) : 0;
+      const isSelected = String(userVote) === String(idx);
+      const key = o._id || o.id || idx;
+      return (
+        <div
+          key={key}
+          className={`p-2 rounded ${
+            isSelected ? "bg-blue-900 ring-1 ring-blue-500" : "bg-gray-700"
+          }`}>
+          <div className="flex justify-between text-sm">
+            <span>{o.text}</span>
+            <span>
+              {o.votes} ({pct}%)
+            </span>
+          </div>
+          <div className="w-full bg-gray-600 rounded-full h-2.5 mt-1">
+            <div
+              className="bg-blue-600 h-2.5 rounded-full"
+              style={{ width: `${pct}%` }}></div>
+          </div>
+        </div>
+      );
+    });
+  };
+
   return (
     <div>
       <h1 className="text-3xl font-bold mb-6">Events & Suggestions</h1>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="section-card">
+        <div className="section-card h-fit">
           <h2 className="text-xl font-semibold mb-4">Submit Suggestion</h2>
           <textarea
             className="w-full form-input h-24"
@@ -57,38 +92,7 @@ const MemberEventsTab = () => {
               <p className="mb-3 font-semibold">{poll.question}</p>
               {hasVoted || !poll.isActive ? (
                 <div className="space-y-2">
-                  {poll.options.map((o, idx) => {
-                    const key = o._id || o.id || idx;
-                    const total = poll.options.reduce(
-                      (sum, x) => sum + (x.votes || 0),
-                      0,
-                    );
-                    const pct = total ? Math.round((o.votes / total) * 100) : 0;
-                    const isSelected =
-                      String(poll?.votesBy?.[btoa(currentUser.email)]) ===
-                      String(idx);
-                    return (
-                      <div
-                        key={key}
-                        className={`p-2 rounded ${
-                          isSelected
-                            ? "bg-blue-900 ring-1 ring-blue-500"
-                            : "bg-gray-700"
-                        }`}>
-                        <div className="flex justify-between text-sm">
-                          <span>{o.text}</span>
-                          <span>
-                            {o.votes} ({pct}%)
-                          </span>
-                        </div>
-                        <div className="w-full bg-gray-600 rounded-full h-2.5 mt-1">
-                          <div
-                            className="bg-blue-600 h-2.5 rounded-full"
-                            style={{ width: `${pct}%` }}></div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {renderPollResults()}
                   <p className="text-xs text-gray-400 mt-2">
                     {!poll.isActive ? "Poll Closed" : "You have voted."}
                   </p>
@@ -116,6 +120,12 @@ const MemberEventsTab = () => {
                     className="btn btn-primary mt-3 disabled:opacity-50 disabled:cursor-not-allowed">
                     {isVoting ? "Voting..." : "Vote"}
                   </button>
+                  <div className="mt-6">
+                    <h3 className="text-sm font-semibold text-gray-300 mb-3">
+                      Live poll results
+                    </h3>
+                    <div className="space-y-2">{renderPollResults()}</div>
+                  </div>
                 </div>
               )}
             </div>

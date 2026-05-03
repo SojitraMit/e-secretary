@@ -29,7 +29,13 @@ const MemberPanel = () => {
   const [selectedBill, setSelectedBill] = useState(null);
 
   // Poll
-  const hasVoted = poll?.votesBy && poll.votesBy.get(btoa(currentUser.email));
+  const encodedEmail = currentUser ? btoa(currentUser.email) : null;
+  const userVote = poll?.votesBy
+    ? typeof poll.votesBy.get === "function"
+      ? poll.votesBy.get(encodedEmail)
+      : poll.votesBy[encodedEmail]
+    : undefined;
+  const hasVoted = userVote !== undefined;
   const [pollSelection, setPollSelection] = useState(null);
 
   // Maintenance
@@ -213,8 +219,7 @@ const MemberPanel = () => {
                           const pct = total
                             ? Math.round((o.votes / total) * 100)
                             : 0;
-                          const isSelected =
-                            poll.votesBy.get(btoa(currentUser.email)) == idx;
+                          const isSelected = String(userVote) === String(idx);
                           return (
                             <div
                               key={key}
